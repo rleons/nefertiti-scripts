@@ -69,6 +69,16 @@ if [ -z ${minChange+x} ]; then
     echo $(date +"%Y/%m/%d %H:%M:%S") "[ERROR] missing argument: --minchange"
     exit 1
 fi
+# Check for jq
+if [ $(dpkg-query -W -f='${Status}' jq 2>/dev/null | grep -c "ok installed") -eq 0 ]; then
+    echo $(date +"%Y/%m/%d %H:%M:%S") "[ERROR] jq is not installed!"
+    exit 1
+fi
+# Check for bc
+if [ $(dpkg-query -W -f='${Status}' bc 2>/dev/null | grep -c "ok installed") -eq 0 ]; then
+    echo $(date +"%Y/%m/%d %H:%M:%S") "[ERROR] bc is not installed!"
+    exit 1
+fi
 
 # Get markets and filter by quote
 echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Loading markets from $exchange..."
