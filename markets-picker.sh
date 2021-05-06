@@ -70,6 +70,22 @@ if [ -z ${minChange+x} ]; then
     exit 1
 fi
 
+# Check for dependencies | d00vy
+echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Testing for dependencies..."
+if (cryptotrader about) | grep -q 'Stefan'; then
+    :
+    else echo $(date +"%Y/%m/%d %H:%M:%S") "[ERROR] Please install 'cryptotrader'..."; exit 1
+fi
+if (jq --help) | grep -q 'JSON'; then
+    :
+    else echo $(date +"%Y/%m/%d %H:%M:%S") "[ERROR] Please install 'jq'..."; exit 1
+fi
+if (bc --help) | grep -q 'mathlib'; then
+    :
+    else echo $(date +"%Y/%m/%d %H:%M:%S") "[ERROR] Please install 'bc'..."; exit 1
+fi
+echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Dependencies met..."
+
 # Get markets and filter by quote
 echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Loading markets from $exchange..."
 markets=$(cryptotrader markets --exchange=$exchange \
