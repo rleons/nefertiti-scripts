@@ -69,16 +69,22 @@ if [ -z ${minChange+x} ]; then
     echo $(date +"%Y/%m/%d %H:%M:%S") "[ERROR] missing argument: --minchange"
     exit 1
 fi
-# Check for jq
-if [ $(dpkg-query -W -f='${Status}' jq 2>/dev/null | grep -c "ok installed") -eq 0 ]; then
-    echo $(date +"%Y/%m/%d %H:%M:%S") "[ERROR] jq is not installed!"
-    exit 1
+
+# Check for dependencies | d00vy
+echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Testing for dependencies..."
+if (cryptotrader about) | grep -q 'Stefan'; then
+    :
+    else echo $(date +"%Y/%m/%d %H:%M:%S") "[ERROR] Please install 'cryptotrader'..."; exit 1
 fi
-# Check for bc
-if [ $(dpkg-query -W -f='${Status}' bc 2>/dev/null | grep -c "ok installed") -eq 0 ]; then
-    echo $(date +"%Y/%m/%d %H:%M:%S") "[ERROR] bc is not installed!"
-    exit 1
+if (jq --help) | grep -q 'JSON'; then
+    :
+    else echo $(date +"%Y/%m/%d %H:%M:%S") "[ERROR] Please install 'jq'..."; exit 1
 fi
+if (bc --help) | grep -q 'mathlib'; then
+    :
+    else echo $(date +"%Y/%m/%d %H:%M:%S") "[ERROR] Please install 'bc'..."; exit 1
+fi
+echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Dependencies met..."
 
 # Get markets and filter by quote
 echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Loading markets from $exchange..."
