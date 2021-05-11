@@ -135,8 +135,8 @@ echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] 24h Percent Change Between: [ -15.00% 
 
         plusLimit=$(echo "15" | bc)
         minusLimit=$(echo "-15" | bc)
-        minChange=$(echo "$minChange*100" | bc)
         minChangeNeg=$(echo "-$minChange*100" | bc)
+        minChange=$(echo "$minChange*100" | bc)
         percChange=$(echo "$minChange" | bc)
 
         for market in $markets; do
