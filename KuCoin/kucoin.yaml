@@ -1,0 +1,13 @@
+apps:
+   - script         : ./kucoin-sell.sh
+     name           : KuCoin-Sell
+     log_file       : "logs/sell.log"
+     autorestart    : false
+   - script         : ./kucoin-buy-cbs.sh
+     name           : KuCoin-Buy-CBS
+     log_file       : "logs/buy-cbs.log"
+     autorestart    : false
+   - script         : ./kucoin-buy-default.sh
+     name           : KuCoin-Buy-Default
+     log_file       : "logs/buy-default.log"
+     autorestart    : false

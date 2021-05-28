@@ -1,0 +1,13 @@
+apps:
+   - script         : ./binance-sell.sh
+     name           : Binance-Sell
+     log_file       : "logs/sell.log"
+     autorestart    : false
+   - script         : ./binance-buy-cbs.sh
+     name           : Binance-Buy-CBS
+     log_file       : "logs/buy-cbs.log"
+     autorestart    : false
+   - script         : ./binance-buy-default.sh
+     name           : Binance-Buy-Default
+     log_file       : "logs/buy-default.log"
+     autorestart    : false

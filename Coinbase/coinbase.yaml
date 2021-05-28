@@ -1,0 +1,13 @@
+apps:
+   - script         : ./coinbase-sell.sh
+     name           : Coinbase-Sell
+     log_file       : "logs/sell.log"
+     autorestart    : false
+   - script         : ./coinbase-buy-cbs.sh
+     name           : Coinbase-Buy-CBS
+     log_file       : "logs/buy-cbs.log"
+     autorestart    : false
+   - script         : ./coinbase-buy-default.sh
+     name           : Coinbase-Buy-Default
+     log_file       : "logs/buy-default.log"
+     autorestart    : false
