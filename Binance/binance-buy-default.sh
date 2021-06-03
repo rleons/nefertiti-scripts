@@ -44,4 +44,4 @@ params="
 echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Executing buy bot with the following settings:"
 echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Exchange: $exchange | Price: $price | TP: `echo "($mult-1)*100" | bc`% | Repeat: Every $repeat hour(s)"
 echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Markets:" $markets
-#cryptotrader buy $params
+cryptotrader buy $params
