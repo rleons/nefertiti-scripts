@@ -9,6 +9,7 @@ https://nefertiti-tradebot.com/
 ├── Binance
 │   ├── binance-buy-cbs.sh | CBS signals buy bot
 │   ├── binance-buy-default.sh | Built-in default strategy buy bot
+│   ├── binance-cancel-orders.sh | Cancel unfilled orders
 │   ├── binance-sell.sh | Simple sell bot
 │   ├── binance.yaml | App declaration for pm2 (process manager)
 │   ├── clusters
@@ -23,10 +24,10 @@ https://nefertiti-tradebot.com/
 ├── KuCoin
 │   ├── kucoin-buy-cbs.sh | CBS signals buy bot
 │   ├── kucoin-buy-default.sh | Built-in default strategy buy bot
+│   ├── kucoin-cancel-orders.sh | Cancel unfilled orders
 │   ├── kucoin-sell.sh | Simple sell bot
 │   ├── kucoin.yaml | App declaration for pm2 (process manager)
 │   └── markets.now | Market pairs for default strategy bot
-├── LICENSE
-├── markets-picker.sh | Filter markets by exchange, volume, and % change (work in progress)
-└── README.md
+│
+└── markets-picker.sh | Filter markets by exchange, volume, and % change (work in progress)
 ```
