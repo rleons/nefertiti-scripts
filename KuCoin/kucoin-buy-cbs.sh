@@ -35,6 +35,7 @@ params="
 --crypto-base-scanner-key=$sigkey \
 --api-key=$apikey \
 --api-secret=$apisec \
+--api-passphrase=$apipass \
 --telegram-app-key=$telekey \
 --telegram-chat-id=$telechat \
 --pushover-app-key=$pushapp \
