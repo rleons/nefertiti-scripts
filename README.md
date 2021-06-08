@@ -33,7 +33,7 @@ https://nefertiti-tradebot.com/
 ```
 
 
-## markets-picker.sh
+## Script: [markets-picker.sh](https://github.com/rleons/nefertiti-scripts/blob/main/markets-picker.sh)
 
 ### Description:
 Script will help you pick markets and filter by a given quote, then it will filter by looking at the last 24h percent change (optionally adjusted), and finally order the top X results by BTC trading volume. Note: Original idea inspired by MarcelM shared methods on Nefertiti trading bot community. 
