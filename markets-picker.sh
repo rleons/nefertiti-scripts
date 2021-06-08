@@ -10,16 +10,21 @@
 # jq - https://stedolan.github.io/jq
 # bc - https://www.gnu.org/software/bc/manual/html_mono/bc.html
 #
+# Options:
+# --exchange    - Currently supports Binance (BINA) and KuCoin (KUCN)
+# --quote       - Script will filter markets by specified quote (Ex: BTC, ETH, USDT)
+# --top         - The amount or market pairs you want the script to output, ordered by BTC volume.
+# --minchange   - 0.05 is a default value and refers to 5% minimum change in the last 24h.
+# --maxchange   - 0.15 is a default value and refers to 15% maximum change in the last 24h.
+#
 # Examples:
 # ./markets-picker.sh --exchange=BINA --quote=BTC --top=15
 # ./markets-picker.sh --exchange=KUCN --quote=USDT --top=20 --minchange=0.10 --maxchange=0.20
 #
 # Notes:
-# (1) --minchange=0.05 is a default value and refers to 5%.
-# (2) --maxchange=0.15 is a default value and refers to 15%.
-# (3) Both --minchange and --maxchange values are applied to both the upside and downside % change.
-# (4) The resulting markets are written to a file in CSV format in case you want to automatically
-# feed them to a Nefertiti buy script. Previous file is always backed up with a timestamped filename.
+# - Both --minchange and --maxchange values are applied to both the upside and downside % change.
+# - The resulting markets are written to a file in CSV format in case you want to automatically
+#   feed them to a Nefertiti buy script. Previous file is always backed up with a timestamped filename.
 
 
 ### Default Settings
