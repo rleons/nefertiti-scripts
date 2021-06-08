@@ -18,6 +18,8 @@
 # (1) --minchange=0.05 is a default value and refers to 5%.
 # (2) --maxchange=0.15 is a default value and refers to 15%.
 # (3) Both --minchange and --maxchange values are applied to both the upside and downside % change.
+# (4) The resulting markets are written to a file in CSV format in case you want to automatically
+# feed them to a Nefertiti buy script. Previous file is always backed up with a timestamped filename.
 
 
 ### Default Settings
