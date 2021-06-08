@@ -1,40 +1,41 @@
 #!/bin/bash
 #
-# 'Markets Picker' script by Roberto Leon,
-# inspired by MarcelM ideas on Nefertiti trading bot community. 
+# Author: Roberto Leon
+# Description: Script will help you pick markets by filtering by the given quote,
+# then it will filter by looking at the last 24h percent change (optionally adjusted),
+# and finally order the top X results by BTC trading volume.
+# * Original idea inspired by MarcelM shared methods on Nefertiti trading bot community. 
 #
 # Dependencies:
-# cryptotrader - https://nefertiti-tradebot.com
 # jq - https://stedolan.github.io/jq
 # bc - https://www.gnu.org/software/bc/manual/html_mono/bc.html
 #
 # Examples:
-# ./markets-picker.sh --exchange=BINA --quote=BTC --minvol=100 --minchange=0.05
-# ./markets-picker.sh --exchange=KUCN --quote=USDT --minvol=5000000 --minchange=0.05
+# ./markets-picker.sh --exchange=BINA --quote=BTC --top=15
+# ./markets-picker.sh --exchange=KUCN --quote=USDT --top=20 --minchange=0.10 --maxchange=0.20
 #
 # Notes:
-# (1) --minvol amount needs to be entered in quote currency.
-# (2) --minchange=0.05 refers to 5%
-# (3) If you want to automatically feed results to your Nefertiti buy script,
-#     the '$symbols' variable at the end is formatted accordingly.
-# (4) A 15% maximum change in the last 24h is statically coded,
-#     but you can manually change them on the 'plusLimit' and 'minusLimit' variables
-#     in order to increase the amount of filtered markets. This is defined per exchange.
-# (5) Both --minchange and statically coded limits are applied to both upside and downside % change.
-#
+# (1) --minchange=0.05 is a default value and refers to 5%.
+# (2) --maxchange=0.15 is a default value and refers to 15%.
+# (3) Both --minchange and --maxchange values are applied to both the upside and downside % change.
 
-# Default Settings
-exchange="BINA"
-declare -i minVol="30000000"
+
+### Default Settings
 minChange="0.05"
-quoteCurr="USDT"
+maxChange="0.15"
 scriptDir="${0%/*}"
+symbols=""
 
-# Exchange APIs
-kucoinAPI="https://api.kucoin.com/api/v1"
-binanceAPI="https://api.binance.com/api/v3"
+### CSV Files
+fileDate=$(date +"%Y%m%d_%H%M%S")
+newFile="markets.new"
+oldFile=$fileDate"_markets.old"
 
-# Flag args
+### Exchange APIs
+kucoinAPI="https://api.kucoin.com/api/v1/market/allTickers"
+binanceAPI="https://api.binance.com/api/v3/ticker/24hr"
+
+### Flag args
 for i in "$@"
 do
 case $i in
@@ -44,15 +45,19 @@ case $i in
     --quote=*)
     quoteCurr="${i#*=}"
     shift;;
-    --minvol=*)
-    declare -i minVol="${i#*=}"
+    --top=*)
+    top="${i#*=}"
     shift;;
     --minchange=*)
     minChange="${i#*=}"
     shift;;
+    --maxchange=*)
+    maxChange="${i#*=}"
+    shift;;
 esac
 done
 
+### Handle missing arguments
 if [ -z ${exchange+x} ]; then
     echo $(date +"%Y/%m/%d %H:%M:%S") "[ERROR] missing argument: --exchange"
     exit 1
@@ -61,16 +66,12 @@ if [ -z ${quoteCurr+x} ]; then
     echo $(date +"%Y/%m/%d %H:%M:%S") "[ERROR] missing argument: --quote"
     exit 1
 fi
-if [ -z ${minVol+x} ]; then
-    echo $(date +"%Y/%m/%d %H:%M:%S") "[ERROR] missing argument: --minvol"
-    exit 1
-fi
-if [ -z ${minChange+x} ]; then
-    echo $(date +"%Y/%m/%d %H:%M:%S") "[ERROR] missing argument: --minchange"
+if [ -z ${top+x} ]; then
+    echo $(date +"%Y/%m/%d %H:%M:%S") "[ERROR] missing argument: --top"
     exit 1
 fi
 
-# Check for dependencies | d00vy
+### Check for dependencies
 echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Testing for dependencies..."
 if (cryptotrader about) | grep -q 'Stefan'; then
     :
@@ -86,82 +87,88 @@ if (bc --help) | grep -q 'mathlib'; then
 fi
 echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Dependencies met..."
 
-# Get markets and filter by quote
-echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Loading markets from $exchange..."
-markets=$(cryptotrader markets --exchange=$exchange \
-        | jq -r --arg quoteCurr "$quoteCurr" '.[]
-        | select(.name | endswith($quoteCurr)) | .name')
-
-# Filter by (24h volume) AND (24h % change greater than --minchange AND less than 15%)
-symbols=""
-formattedVol=$(printf "%'.0f\n" $minVol)
-percChange=$(echo "$minChange*100" | bc)
-echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Filtering $quoteCurr markets with the following conditions:"
-echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] 24h Trading Volume: >= $formattedVol $quoteCurr"
-echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] 24h Percent Change Between: [ -15.00% to -$percChange% ] OR [ $percChange% to 15.00% ]"
+### Filter top X markets by (24h BTC volume) AND (24h % change greater than --minchange AND less than --maxchange)
 
     # KuCoin
     if [[ $exchange = "KUCN" || $exchange = "Kucoin" ]]; then
 
-        plusLimit=$(echo "0.15" | bc)
-        minusLimit=$(echo "-0.15" | bc)
+        plusLimit=$(echo $maxChange | bc)
+        minusLimit=$(echo "-$maxChange" | bc)
         minChange=$(echo $minChange | bc)
         minChangeNeg=$(echo "-$minChange" | bc)
-        percChange=$(echo "$minChange*100" | bc)
+        percChangeMin=$(echo "$minChange*100" | bc)
+        percChangeMax=$(echo "$maxChange*100" | bc)
 
-        for market in $markets; do
-            filteredS=$(curl -sS $kucoinAPI"/market/stats?symbol="$market \
-            | jq -r --argjson minVol $minVol \
+        echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Loading markets from $exchange..."
+        marketsData=$(curl -sS $kucoinAPI | jq '.data.ticker[]')
+
+        echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Filtering top $top $quoteCurr markets ordered by 24h volume with the following conditions:"
+        echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] 24h Percent Change Between: [ -$percChangeMax% to -$percChangeMin% ] OR [ $percChangeMin% to $percChangeMax% ]"
+
+        markets=$(echo $marketsData \
+            | jq -s --arg quoteCurr $quoteCurr '.[] | select(.symbol | endswith($quoteCurr))' \
+            | jq -s \
             --argjson minChange $minChange \
             --argjson minChangeNeg $minChangeNeg \
             --argjson plusLimit $plusLimit \
             --argjson minusLimit $minusLimit \
-            '.data
-            | select(
-                ((.volValue | tonumber) >= $minVol) and
-                    ((((.changeRate | tonumber) <= $minChangeNeg) and ((.changeRate | tonumber) >= $minusLimit)) or
-                    (((.changeRate | tonumber) >= $minChange) and ((.changeRate | tonumber) <= $plusLimit)))
+            '.[] | select(
+                (((.changeRate | tonumber) <= $minChangeNeg) and ((.changeRate | tonumber) >= $minusLimit)) or
+                (((.changeRate | tonumber) >= $minChange) and ((.changeRate | tonumber) <= $plusLimit)) )' \
+            | jq -s 'sort_by(.vol | split(".") | map(tonumber)) | reverse' \
+            | jq -s '.[] | map({symbol: .symbol, vol: (.vol | tonumber), changeRate: (.changeRate | tonumber)})' \
+            | jq --argjson top $top '.[0:$top]' \
             )
-            | .symbol')
-
-            if [[ $filteredS != "" ]]; then
-                symbols+=$filteredS,
-            fi
-        done
+        echo $markets | jq
     fi
 
     # Binance
     if [[ $exchange = "BINA" || $exchange = "Binance" ]]; then
 
-        plusLimit=$(echo "15" | bc)
-        minusLimit=$(echo "-15" | bc)
+        plusLimit=$(echo "$maxChange*100" | bc)
+        minusLimit=$(echo "-$plusLimit" | bc)
         minChange=$(echo "$minChange*100" | bc)
         minChangeNeg=$(echo "-$minChange" | bc)
-        percChange=$(echo "$minChange" | bc)
 
-        for market in $markets; do
-            filteredS=$(curl -sS $binanceAPI"/ticker/24hr?symbol="$market \
-            | jq -r --argjson minVol $minVol \
+        echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Loading markets from $exchange..."
+        marketsData=$(curl -sS $binanceAPI | jq '.[]')
+
+        echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Filtering top $top $quoteCurr markets ordered by 24h volume with the following conditions:"
+        echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] 24h Percent Change Between: [ -$plusLimit% to -$minChange% ] OR [ $minChange% to $plusLimit% ]"
+
+        markets=$(echo $marketsData \
+            | jq -s --arg quoteCurr $quoteCurr '.[] | select(.symbol | endswith($quoteCurr))' \
+            | jq -s \
             --argjson minChange $minChange \
             --argjson minChangeNeg $minChangeNeg \
             --argjson plusLimit $plusLimit \
             --argjson minusLimit $minusLimit \
-            '.
-            | select(
-                ((.quoteVolume | tonumber) >= $minVol) and
-                    ((((.priceChangePercent | tonumber) <= $minChangeNeg) and ((.priceChangePercent | tonumber) >= $minusLimit)) or
-                    (((.priceChangePercent | tonumber) >= $minChange) and ((.priceChangePercent | tonumber) <= $plusLimit)))
+            '.[] | select(
+                (((.priceChangePercent | tonumber) <= $minChangeNeg) and ((.priceChangePercent | tonumber) >= $minusLimit)) or
+                (((.priceChangePercent | tonumber) >= $minChange) and ((.priceChangePercent | tonumber) <= $plusLimit)) )' \
+            | jq -s 'sort_by(.volume | split(".") | map(tonumber)) | reverse' \
+            | jq -s '.[] | map({symbol: .symbol, volume: (.volume | tonumber), priceChangePercent: (.priceChangePercent | tonumber)})' \
+            | jq --argjson top $top '.[0:$top]' \
             )
-            | .symbol')
-
-            if [[ $filteredS != "" ]]; then
-                symbols+=$filteredS,
-            fi
-        done
+        echo $markets | jq
     fi
 
-symCount=$(echo "$symbols" | awk -F "," '{print NF-1}')
-symbols=$(echo $symbols | sed 's/.$//') # Trim extra comma from end of string | Another approach: pairs=${pairs%,}
-echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Filtered a total of $symCount $quoteCurr markets:"
-echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] $symbols"
-echo
+### Create CSV formatted string
+marketSymbols=$(echo $markets | jq -r '.[].symbol')
+for market in $marketSymbols; do
+    if [[ $market != "" ]]; then
+        symbols+=$market,
+    fi
+done
+symbols=${symbols%,} # Trim extra comma from end of string
+
+### Backup previous CSV (if any) and write picked markets to a CSV file
+if test -f "$newFile"; then
+    echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Backing up existing $newFile to $oldFile"
+    mv $newFile $oldFile
+    echo $symbols > $newFile
+    echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Picked markets have been saved to $newFile on a CSV format"
+else
+    echo $symbols > $newFile
+    echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Picked markets have been saved to $newFile on CSV format"
+fi
