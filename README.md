@@ -36,7 +36,7 @@ https://nefertiti-tradebot.com/
 ## Script: [markets-picker.sh](https://github.com/rleons/nefertiti-scripts/blob/main/markets-picker.sh)
 
 ### Description:
-Script will help you pick markets and filter by a given quote, then it will filter by looking at the last 24h percent change (optionally adjusted), and finally order the top X results by BTC trading volume. Note: Original idea inspired by MarcelM shared methods on Nefertiti trading bot community. 
+Script will help you pick markets and filter by a given quote, then it will filter by looking at the last 24h percent change (optionally adjusted), and finally order the top X results by quote trading volume. Note: Original idea inspired by MarcelM shared methods on Nefertiti trading bot community. 
 
 ### Dependencies:
 jq - https://stedolan.github.io/jq <br>
@@ -46,7 +46,7 @@ bc - https://www.gnu.org/software/bc/manual/html_mono/bc.html
 ```
 --exchange    - Currently supports Binance (BINA) and KuCoin (KUCN)
 --quote       - Script will filter markets by specified quote (Ex: BTC, ETH, USDT)
---top         - The amount or market pairs you want the script to output, ordered by BTC volume.
+--top         - The amount or market pairs you want the script to output, ordered by quote volume.
 --minchange   - 0.05 is a default value and refers to 5% minimum change in the last 24h.
 --maxchange   - 0.15 is a default value and refers to 15% maximum change in the last 24h.
 ```

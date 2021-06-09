@@ -3,7 +3,7 @@
 # Author: Roberto Leon
 # Description: Script will help you pick markets by filtering by the given quote,
 # then it will filter by looking at the last 24h percent change (optionally adjusted),
-# and finally order the top X results by BTC trading volume.
+# and finally order the top X results by quote trading volume.
 # * Original idea inspired by MarcelM shared methods on Nefertiti trading bot community. 
 #
 # Dependencies:
@@ -13,7 +13,7 @@
 # Options:
 # --exchange    - Currently supports Binance (BINA) and KuCoin (KUCN)
 # --quote       - Script will filter markets by specified quote (Ex: BTC, ETH, USDT)
-# --top         - The amount or market pairs you want the script to output, ordered by BTC volume.
+# --top         - The amount or market pairs you want the script to output, ordered by quote volume.
 # --minchange   - 0.05 is a default value and refers to 5% minimum change in the last 24h.
 # --maxchange   - 0.15 is a default value and refers to 15% maximum change in the last 24h.
 #
@@ -94,7 +94,7 @@ if (bc --help) | grep -q 'mathlib'; then
 fi
 echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Dependencies met..."
 
-### Filter top X markets by (24h BTC volume) AND (24h % change greater than --minchange AND less than --maxchange)
+### Filter top X markets by (24h quote volume) AND (24h % change greater than --minchange AND less than --maxchange)
 
     # KuCoin
     if [[ $exchange = "KUCN" || $exchange = "Kucoin" ]]; then
@@ -122,8 +122,8 @@ echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Dependencies met..."
             '.[] | select(
                 (((.changeRate | tonumber) <= $minChangeNeg) and ((.changeRate | tonumber) >= $minusLimit)) or
                 (((.changeRate | tonumber) >= $minChange) and ((.changeRate | tonumber) <= $plusLimit)) )' \
-            | jq -s 'sort_by(.vol | split(".") | map(tonumber)) | reverse' \
-            | jq -s '.[] | map({symbol: .symbol, vol: (.vol | tonumber), changeRate: (.changeRate | tonumber)})' \
+            | jq -s 'sort_by(.volValue | split(".") | map(tonumber)) | reverse' \
+            | jq -s '.[] | map({symbol: .symbol, volValue: (.volValue | tonumber), changeRate: (.changeRate | tonumber)})' \
             | jq --argjson top $top '.[0:$top]' \
             )
         echo $markets | jq
@@ -153,8 +153,8 @@ echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Dependencies met..."
             '.[] | select(
                 (((.priceChangePercent | tonumber) <= $minChangeNeg) and ((.priceChangePercent | tonumber) >= $minusLimit)) or
                 (((.priceChangePercent | tonumber) >= $minChange) and ((.priceChangePercent | tonumber) <= $plusLimit)) )' \
-            | jq -s 'sort_by(.volume | split(".") | map(tonumber)) | reverse' \
-            | jq -s '.[] | map({symbol: .symbol, volume: (.volume | tonumber), priceChangePercent: (.priceChangePercent | tonumber)})' \
+            | jq -s 'sort_by(.quoteVolume | split(".") | map(tonumber)) | reverse' \
+            | jq -s '.[] | map({symbol: .symbol, quoteVolume: (.quoteVolume | tonumber), priceChangePercent: (.priceChangePercent | tonumber)})' \
             | jq --argjson top $top '.[0:$top]' \
             )
         echo $markets | jq
