@@ -163,8 +163,8 @@ echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Dependencies met..."
             --argjson minPrice $minPrice \
             --argjson maxPrice $maxPrice \
             '.[] | select(
-                (((.priceChangePercent | tonumber) >= $minPrice) and ((.priceChangePercent | tonumber) <= $maxPrice)) and (((.priceChangePercent | tonumber) <= $minChangeNeg) and ((.priceChangePercent | tonumber) >= $minusLimit)) or
-                (((.priceChangePercent | tonumber) >= $minPrice) and ((.priceChangePercent | tonumber) <= $maxPrice)) and (((.priceChangePercent | tonumber) >= $minChange) and ((.priceChangePercent | tonumber) <= $plusLimit)) )' \
+                (((.lastPrice | tonumber) >= $minPrice) and ((.lastPrice | tonumber) <= $maxPrice)) and (((.priceChangePercent | tonumber) <= $minChangeNeg) and ((.priceChangePercent | tonumber) >= $minusLimit)) or
+                (((.lastPrice | tonumber) >= $minPrice) and ((.lastPrice | tonumber) <= $maxPrice)) and (((.priceChangePercent | tonumber) >= $minChange) and ((.priceChangePercent | tonumber) <= $plusLimit)) )' \
             | jq -s 'sort_by(.quoteVolume | split(".") | map(tonumber)) | reverse' \
             | jq -s '.[] | map({symbol: .symbol, quoteVolume: (.quoteVolume | tonumber), priceChangePercent: (.priceChangePercent | tonumber)})' \
             | jq --argjson top $top '.[0:$top]' \
