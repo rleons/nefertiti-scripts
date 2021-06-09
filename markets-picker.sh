@@ -28,6 +28,8 @@
 
 
 ### Default Settings
+minPrice="0.00"
+maxPrice="1.50"
 minChange="0.05"
 maxChange="0.15"
 scriptDir="${0%/*}"
@@ -60,6 +62,12 @@ case $i in
     shift;;
     --maxchange=*)
     maxChange="${i#*=}"
+    shift;;
+    --minprice=*)
+    minPrice="${i#*=}"
+    shift;;
+    --maxprice=*)
+    maxPrice="${i#*=}"
     shift;;
 esac
 done
@@ -136,6 +144,8 @@ echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Dependencies met..."
         minusLimit=$(echo "-$plusLimit" | bc)
         minChange=$(echo "$minChange*100" | bc)
         minChangeNeg=$(echo "-$minChange" | bc)
+        minPrice=$(echo "$minPrice*100" | bc)
+        maxPrice=$(echo "$maxPrice*100" | bc)
 
         echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Loading markets from $exchange..."
         marketsData=$(curl -sS $binanceAPI | jq '.[]')
@@ -150,9 +160,11 @@ echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Dependencies met..."
             --argjson minChangeNeg $minChangeNeg \
             --argjson plusLimit $plusLimit \
             --argjson minusLimit $minusLimit \
+            --argjson minPrice $minPrice \
+            --argjson maxPrice $maxPrice \
             '.[] | select(
-                (((.priceChangePercent | tonumber) <= $minChangeNeg) and ((.priceChangePercent | tonumber) >= $minusLimit)) or
-                (((.priceChangePercent | tonumber) >= $minChange) and ((.priceChangePercent | tonumber) <= $plusLimit)) )' \
+                (((.priceChangePercent | tonumber) >= $minPrice) and ((.priceChangePercent | tonumber) <= $maxPrice)) and (((.priceChangePercent | tonumber) <= $minChangeNeg) and ((.priceChangePercent | tonumber) >= $minusLimit)) or
+                (((.priceChangePercent | tonumber) >= $minPrice) and ((.priceChangePercent | tonumber) <= $maxPrice)) and (((.priceChangePercent | tonumber) >= $minChange) and ((.priceChangePercent | tonumber) <= $plusLimit)) )' \
             | jq -s 'sort_by(.quoteVolume | split(".") | map(tonumber)) | reverse' \
             | jq -s '.[] | map({symbol: .symbol, quoteVolume: (.quoteVolume | tonumber), priceChangePercent: (.priceChangePercent | tonumber)})' \
             | jq --argjson top $top '.[0:$top]' \
