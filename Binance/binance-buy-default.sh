@@ -2,7 +2,7 @@
 
 # Author: Roberto Leon
 # Description: Simple Nefertiti Crypto Trading Bot Buy Script (Binance)
-# Built-in Default Strategy
+# Built-in Default Strategy w/ Dollar Cost Averaging
 
 ### Keys
 apikey="x"
