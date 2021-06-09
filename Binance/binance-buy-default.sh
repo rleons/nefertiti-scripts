@@ -21,7 +21,7 @@ repeat="1"
 dip="7"
 
 ### Markets
-markets=$(cat markets.now)
+markets=$(cat markets.new)
 
 ### Build params string
 params="
