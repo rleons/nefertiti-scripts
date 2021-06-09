@@ -29,7 +29,7 @@ https://nefertiti-tradebot.com/
 │   ├── kucoin.yaml | App declaration for pm2 (process manager)
 │   └── markets.new | Market pairs for default strategy bot
 │
-└── markets-picker.sh | Filter markets by quote, 24h % change, and orders them by BTC volume
+└── markets-picker.sh | Filter markets by quote, 24h % change, and orders them by quote volume
 ```
 
 
