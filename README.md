@@ -57,7 +57,6 @@ bc - https://www.gnu.org/software/bc/manual/html_mono/bc.html
 ```
 ./markets-picker.sh --exchange=BINA --quote=BTC --top=15
 ./markets-picker.sh --exchange=KUCN --quote=USDT --top=20 --minchange=0.10 --maxchange=0.20
-
 ./markets-picker.sh --exchange=BINACE --quote=USDT --top=12 --minchange=0.04 --maxchange=0.82 --minprice=0.01 --maxprice=0.93
 ```
 
