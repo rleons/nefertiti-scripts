@@ -2,7 +2,7 @@
 
 # Author: Roberto Leon
 # Description: Simple Nefertiti Crypto Trading Bot Buy Script (Binance)
-# Crypto Base Scanner (CBS) Signals
+# Crypto Base Scanner (CBS) Signals w/ Dollar Cost Averaging
 
 ### Keys
 sigprov="cryptobasescanner.com"
