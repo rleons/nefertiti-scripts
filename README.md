@@ -57,9 +57,10 @@ bc - https://www.gnu.org/software/bc/manual/html_mono/bc.html
 ```
 ./markets-picker.sh --exchange=BINA --quote=BTC --top=15
 ./markets-picker.sh --exchange=KUCN --quote=USDT --top=20 --minchange=0.10 --maxchange=0.20
-./markets-picker.sh --exchange=BINACE --quote=USDT --top=12 --minchange=0.04 --maxchange=0.82 --minprice=0.01 --maxprice=0.93
+./markets-picker.sh --exchange=BINA --quote=USDT --top=12 --minchange=0.04 --maxchange=0.82 --minprice=0.01 --maxprice=0.93
 ```
 
 ### Notes:
 - Both --minchange and --maxchange values are applied to both the upside and downside % change. <br>
+- Both --minprice and --maxprice values are currently only avaible for the BINANCE exchange. <br>
 - The resulting markets are written to a file in CSV format in case you want to automatically feed them to a Nefertiti buy script. Previous file is always backed up with a timestamped filename.
