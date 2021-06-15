@@ -28,8 +28,8 @@
 
 
 ### Default Settings
-minPrice="0.00"
-maxPrice="150.00"
+minPrice="0"
+maxPrice="150"
 minChange="0.05"
 maxChange="0.15"
 scriptDir="${0%/*}"
