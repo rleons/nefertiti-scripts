@@ -29,7 +29,7 @@
 
 ### Default Settings
 minPrice="0.00"
-maxPrice="1.50"
+maxPrice="150.00"
 minChange="0.05"
 maxChange="0.15"
 scriptDir="${0%/*}"
@@ -144,8 +144,6 @@ echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Dependencies met..."
         minusLimit=$(echo "-$plusLimit" | bc)
         minChange=$(echo "$minChange*100" | bc)
         minChangeNeg=$(echo "-$minChange" | bc)
-        minPrice=$(echo "$minPrice*100" | bc)
-        maxPrice=$(echo "$maxPrice*100" | bc)
 
         echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Loading markets from $exchange..."
         marketsData=$(curl -sS $binanceAPI | jq '.[]')
