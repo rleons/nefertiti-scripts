@@ -49,8 +49,8 @@ bc - https://www.gnu.org/software/bc/manual/html_mono/bc.html
 --top         - The amount or market pairs you want the script to output, ordered by quote volume.
 --minchange   - 0.05 is a default value and refers to 5% minimum change in the last 24h.
 --maxchange   - 0.15 is a default value and refers to 15% maximum change in the last 24h.
---minprice    - 0.00 is a default value and means that minimun price is 0.
---maxprice    - 1.50 is a default value and means that maximum price is 150.
+--minprice    - 0 is a default value and means that minimun price is 0.
+--maxprice    - 150 is a default value and means that maximum price is 150.
 ```
 
 ### Examples:
