@@ -49,11 +49,12 @@ bc - https://www.gnu.org/software/bc/manual/html_mono/bc.html
 --top         - The amount or market pairs you want the script to output, ordered by quote volume.
 --minchange   - 0.05 is a default value and refers to 5% minimum change in the last 24h.
 --maxchange   - 0.15 is a default value and refers to 15% maximum change in the last 24h.
+--ignore      - Valid options: 'leveraged'
 ```
 
 ### Examples:
 ```
-./markets-picker.sh --exchange=BINA --quote=BTC --top=15
+./markets-picker.sh --exchange=BINA --quote=BTC --top=15 --ignore=leveraged
 ./markets-picker.sh --exchange=KUCN --quote=USDT --top=20 --minchange=0.10 --maxchange=0.20
 ```
 

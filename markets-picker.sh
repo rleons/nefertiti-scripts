@@ -16,9 +16,10 @@
 # --top         - The amount or market pairs you want the script to output, ordered by quote volume.
 # --minchange   - 0.05 is a default value and refers to 5% minimum change in the last 24h.
 # --maxchange   - 0.15 is a default value and refers to 15% maximum change in the last 24h.
+# --ignore      - Valid options: 'leveraged'
 #
 # Examples:
-# ./markets-picker.sh --exchange=BINA --quote=BTC --top=15
+# ./markets-picker.sh --exchange=BINA --quote=BTC --top=15 --ignore=leveraged
 # ./markets-picker.sh --exchange=KUCN --quote=USDT --top=20 --minchange=0.10 --maxchange=0.20
 #
 # Notes:
@@ -60,6 +61,9 @@ case $i in
     shift;;
     --maxchange=*)
     maxChange="${i#*=}"
+    shift;;
+    --ignore=*)
+    ignore="${i#*=}"
     shift;;
 esac
 done
@@ -109,11 +113,22 @@ echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Dependencies met..."
         echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Loading markets from $exchange..."
         marketsData=$(curl -sS $kucoinAPI | jq '.data.ticker[]')
 
+        if [[ $ignore = "leveraged" ]]; then
+            echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Ignoring leveraged tokens..."
+            markets=$(echo $marketsData \
+            | jq -s --arg quoteCurr $quoteCurr '.[] | select(.symbol | endswith($quoteCurr))' \
+            | jq -s '.[] | select( (.symbol | contains("3L")) or (.symbol | contains("3S")) | not)' \
+            )
+            else
+                markets=$(echo $marketsData \
+                | jq -s --arg quoteCurr $quoteCurr '.[] | select(.symbol | endswith($quoteCurr))' \
+                )
+        fi
+
         echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Filtering top $top $quoteCurr markets ordered by 24h volume with the following conditions:"
         echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] 24h Percent Change Between: [ -$percChangeMax% to -$percChangeMin% ] OR [ $percChangeMin% to $percChangeMax% ]"
 
-        markets=$(echo $marketsData \
-            | jq -s --arg quoteCurr $quoteCurr '.[] | select(.symbol | endswith($quoteCurr))' \
+        markets=$(echo $markets \
             | jq -s \
             --argjson minChange $minChange \
             --argjson minChangeNeg $minChangeNeg \
@@ -140,11 +155,22 @@ echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Dependencies met..."
         echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Loading markets from $exchange..."
         marketsData=$(curl -sS $binanceAPI | jq '.[]')
 
+        if [[ $ignore = "leveraged" ]]; then
+            echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Ignoring leveraged tokens..."
+            markets=$(echo $marketsData \
+            | jq -s --arg quoteCurr $quoteCurr '.[] | select(.symbol | endswith($quoteCurr))' \
+            | jq -s '.[] | select( (.symbol | contains("UP")) or (.symbol | contains("DOWN")) | not)' \
+            )
+            else
+                markets=$(echo $marketsData \
+                | jq -s --arg quoteCurr $quoteCurr '.[] | select(.symbol | endswith($quoteCurr))' \
+                )
+        fi
+
         echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Filtering top $top $quoteCurr markets ordered by 24h volume with the following conditions:"
         echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] 24h Percent Change Between: [ -$plusLimit% to -$minChange% ] OR [ $minChange% to $plusLimit% ]"
 
-        markets=$(echo $marketsData \
-            | jq -s --arg quoteCurr $quoteCurr '.[] | select(.symbol | endswith($quoteCurr))' \
+        markets=$(echo $markets \
             | jq -s \
             --argjson minChange $minChange \
             --argjson minChangeNeg $minChangeNeg \
