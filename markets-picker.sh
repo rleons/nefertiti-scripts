@@ -11,7 +11,7 @@
 # bc - https://www.gnu.org/software/bc/manual/html_mono/bc.html
 #
 # Options:
-# --exchange    - Currently supports Binance (BINA) and KuCoin (KUCN)
+# --exchange    - Currently supports Binance (BINA), KuCoin (KUCN) and Bittrex (BTRX)
 # --quote       - Script will filter markets by specified quote (Ex: BTC, ETH, USDT)
 # --top         - The amount or market pairs you want the script to output, ordered by quote volume.
 # --minchange   - 0.05 is a default value and refers to 5% minimum change in the last 24h.
@@ -42,6 +42,7 @@ oldFile=$fileDate"_markets.old"
 ### Exchange APIs
 kucoinAPI="https://api.kucoin.com/api/v1/market/allTickers"
 binanceAPI="https://api.binance.com/api/v3/ticker/24hr"
+bittrexAPI="https://api.bittrex.com/v3/markets/summaries"
 
 ### Flag args
 for i in "$@"
@@ -103,8 +104,8 @@ echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Dependencies met..."
     # KuCoin
     if [[ $exchange = "KUCN" || $exchange = "Kucoin" ]]; then
 
-        plusLimit=$(echo $maxChange | bc)
-        minusLimit=$(echo "-$maxChange" | bc)
+        maxChange=$(echo $maxChange | bc)
+        maxChangeNeg=$(echo "-$maxChange" | bc)
         minChange=$(echo $minChange | bc)
         minChangeNeg=$(echo "-$minChange" | bc)
         percChangeMin=$(echo "$minChange*100" | bc)
@@ -125,18 +126,18 @@ echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Dependencies met..."
                 )
         fi
 
-        echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Filtering top $top $quoteCurr markets ordered by 24h volume with the following conditions:"
+        echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Filtering top $top $quoteCurr markets ordered by 24h quote volume with the following conditions:"
         echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] 24h Percent Change Between: [ -$percChangeMax% to -$percChangeMin% ] OR [ $percChangeMin% to $percChangeMax% ]"
 
         markets=$(echo $markets \
             | jq -s \
             --argjson minChange $minChange \
             --argjson minChangeNeg $minChangeNeg \
-            --argjson plusLimit $plusLimit \
-            --argjson minusLimit $minusLimit \
+            --argjson maxChange $maxChange \
+            --argjson maxChangeNeg $maxChangeNeg \
             '.[] | select(
-                (((.changeRate | tonumber) <= $minChangeNeg) and ((.changeRate | tonumber) >= $minusLimit)) or
-                (((.changeRate | tonumber) >= $minChange) and ((.changeRate | tonumber) <= $plusLimit)) )' \
+                (((.changeRate | tonumber) <= $minChangeNeg) and ((.changeRate | tonumber) >= $maxChangeNeg)) or
+                (((.changeRate | tonumber) >= $minChange) and ((.changeRate | tonumber) <= $maxChange)) )' \
             | jq -s 'sort_by(.volValue | split(".") | map(tonumber)) | reverse' \
             | jq -s '.[] | map({symbol: .symbol, volValue: (.volValue | tonumber), changeRate: (.changeRate | tonumber)})' \
             | jq --argjson top $top '.[0:$top]' \
@@ -147,8 +148,8 @@ echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Dependencies met..."
     # Binance
     if [[ $exchange = "BINA" || $exchange = "Binance" ]]; then
 
-        plusLimit=$(echo "$maxChange*100" | bc)
-        minusLimit=$(echo "-$plusLimit" | bc)
+        maxChange=$(echo "$maxChange*100" | bc)
+        maxChangeNeg=$(echo "-$maxChange" | bc)
         minChange=$(echo "$minChange*100" | bc)
         minChangeNeg=$(echo "-$minChange" | bc)
 
@@ -167,20 +168,57 @@ echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Dependencies met..."
                 )
         fi
 
-        echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Filtering top $top $quoteCurr markets ordered by 24h volume with the following conditions:"
-        echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] 24h Percent Change Between: [ -$plusLimit% to -$minChange% ] OR [ $minChange% to $plusLimit% ]"
+        echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Filtering top $top $quoteCurr markets ordered by 24h quote volume with the following conditions:"
+        echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] 24h Percent Change Between: [ $maxChangeNeg% to $minChangeNeg% ] OR [ $minChange% to $maxChange% ]"
 
         markets=$(echo $markets \
             | jq -s \
             --argjson minChange $minChange \
             --argjson minChangeNeg $minChangeNeg \
-            --argjson plusLimit $plusLimit \
-            --argjson minusLimit $minusLimit \
+            --argjson maxChange $maxChange \
+            --argjson maxChangeNeg $maxChangeNeg \
             '.[] | select(
-                (((.priceChangePercent | tonumber) <= $minChangeNeg) and ((.priceChangePercent | tonumber) >= $minusLimit)) or
-                (((.priceChangePercent | tonumber) >= $minChange) and ((.priceChangePercent | tonumber) <= $plusLimit)) )' \
+                (((.priceChangePercent | tonumber) <= $minChangeNeg) and ((.priceChangePercent | tonumber) >= $maxChangeNeg)) or
+                (((.priceChangePercent | tonumber) >= $minChange) and ((.priceChangePercent | tonumber) <= $maxChange)) )' \
             | jq -s 'sort_by(.quoteVolume | split(".") | map(tonumber)) | reverse' \
             | jq -s '.[] | map({symbol: .symbol, quoteVolume: (.quoteVolume | tonumber), priceChangePercent: (.priceChangePercent | tonumber)})' \
+            | jq --argjson top $top '.[0:$top]' \
+            )
+        echo $markets | jq
+    fi
+
+    # Bittrex
+    if [[ $exchange = "BTRX" || $exchange = "Bittrex" ]]; then
+
+        maxChange=$(echo "$maxChange*100" | bc)
+        maxChangeNeg=$(echo "-$maxChange" | bc)
+        minChange=$(echo "$minChange*100" | bc)
+        minChangeNeg=$(echo "-$minChange" | bc)
+
+        echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Loading markets from $exchange..."
+        marketsData=$(curl -sS $bittrexAPI | jq '.[]')
+
+        if [[ $ignore = "leveraged" ]]; then
+            echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] No leveraged tokens on $exchange..."
+        fi
+
+        echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] Filtering top $top $quoteCurr markets ordered by 24h quote volume with the following conditions:"
+        echo $(date +"%Y/%m/%d %H:%M:%S") "[INFO] 24h Percent Change Between: [ $maxChangeNeg% to $minChangeNeg% ] OR [ $minChange% to $maxChange% ]"
+
+        markets=$(echo $marketsData \
+            | jq -s --arg quoteCurr $quoteCurr '.[] | select(.symbol | endswith($quoteCurr))' \
+            | jq -s '.[] | select(.percentChange != null)' \
+            | jq -s '.[] | select(.quoteVolume != null)' \
+            | jq -s \
+            --argjson minChange $minChange \
+            --argjson minChangeNeg $minChangeNeg \
+            --argjson maxChange $maxChange \
+            --argjson maxChangeNeg $maxChangeNeg \
+            '.[] | select(
+                (((.percentChange | tonumber) <= $minChangeNeg) and ((.percentChange | tonumber) >= $maxChangeNeg)) or
+                (((.percentChange | tonumber) >= $minChange) and ((.percentChange | tonumber) <= $maxChange)) )' \
+            | jq -s 'sort_by(.quoteVolume | split(".") | map(tonumber)) | reverse' \
+            | jq -s '.[] | map({symbol: .symbol, quoteVolume: (.quoteVolume | tonumber), percentChange: (.percentChange | tonumber)})' \
             | jq --argjson top $top '.[0:$top]' \
             )
         echo $markets | jq

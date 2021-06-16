@@ -44,7 +44,7 @@ bc - https://www.gnu.org/software/bc/manual/html_mono/bc.html
 
 ### Options:
 ```
---exchange    - Currently supports Binance (BINA) and KuCoin (KUCN)
+--exchange    - Currently supports Binance (BINA), KuCoin (KUCN) and Bittrex (BTRX)
 --quote       - Script will filter markets by specified quote (Ex: BTC, ETH, USDT)
 --top         - The amount or market pairs you want the script to output, ordered by quote volume.
 --minchange   - 0.05 is a default value and refers to 5% minimum change in the last 24h.
